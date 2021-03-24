@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <signal.h>
+#include <math.h>
 
 #include <modbus.h>
 
@@ -50,7 +51,7 @@ int main(void)
     /* Maximum file descriptor number */
     int fdmax;
 
-    ctx = modbus_new_tcp("127.0.0.1", 1502);
+    ctx = modbus_new_tcp("0.0.0.0", 1502);
 
     mb_mapping = modbus_mapping_new(MODBUS_MAX_READ_BITS, 0,
                                     MODBUS_MAX_READ_REGISTERS, 0);
@@ -60,6 +61,70 @@ int main(void)
         modbus_free(ctx);
         return -1;
     }
+
+    int16_t i16 = 0;
+    int32_t i32 = -5555555;
+    int64_t i64 = 0x8FAB3A9DFE0C88;
+    uint32_t u32 = 0xFFAB3A9D;
+    uint64_t u64 = 0x8FAB3A9DFE0C88;
+
+    /* All the values for signed int (8, 16, 32, 64) */
+    i16 = -120;
+    mb_mapping->tab_registers[0x000] = (uint16_t)i16;
+    i16 = -500;
+    mb_mapping->tab_registers[0x010] = (uint16_t)i16;
+    MODBUS_SET_INT32_TO_INT16(mb_mapping->tab_registers, 0x020, i32);
+    MODBUS_SET_INT64_TO_INT16(mb_mapping->tab_registers, 0x030, i64);
+
+
+    /* All the values for unsigned int (8, 16, 32, 64) */
+    mb_mapping->tab_registers[0x040] = 136;
+    mb_mapping->tab_registers[0x050] = 0xFE0C;
+    MODBUS_SET_INT32_TO_INT16(mb_mapping->tab_registers, 0x060, u32);
+    MODBUS_SET_INT64_TO_INT16(mb_mapping->tab_registers, 0x070, u64);
+
+    /* TODO: All the values for float (64-bits) */
+    // modbus_set_float_abcd(M_PI, (mb_mapping->tab_registers + 0x080));
+
+    /* All the values for float (32-bits) */
+    modbus_set_float_abcd(M_PI, (mb_mapping->tab_registers + 0x090));
+
+    /* Raw bytes 0x0102030405060708090A*/
+    mb_mapping->tab_registers[0x0A0] = 0x01;
+    mb_mapping->tab_registers[0x0A1] = 0x02;
+    mb_mapping->tab_registers[0x0A2] = 0x03;
+    mb_mapping->tab_registers[0x0A3] = 0x04;
+    mb_mapping->tab_registers[0x0A4] = 0x05;
+    mb_mapping->tab_registers[0x0A5] = 0x06;
+    mb_mapping->tab_registers[0x0A6] = 0x07;
+    mb_mapping->tab_registers[0x0A7] = 0x08;
+    mb_mapping->tab_registers[0x0A8] = 0x09;
+    mb_mapping->tab_registers[0x0A9] = 0x0A;
+
+    /* UTF-8 string: "This is a UTF-8 string!" */
+    mb_mapping->tab_registers[0x0B0] = 0x54;
+    mb_mapping->tab_registers[0x0B1] = 0x68;
+    mb_mapping->tab_registers[0x0B2] = 0x69;
+    mb_mapping->tab_registers[0x0B3] = 0x73;
+    mb_mapping->tab_registers[0x0B4] = 0x20;
+    mb_mapping->tab_registers[0x0B5] = 0x69;
+    mb_mapping->tab_registers[0x0B6] = 0x73;
+    mb_mapping->tab_registers[0x0B7] = 0x20;
+    mb_mapping->tab_registers[0x0B8] = 0x61;
+    mb_mapping->tab_registers[0x0B9] = 0x20;
+    mb_mapping->tab_registers[0x0BA] = 0x55;
+    mb_mapping->tab_registers[0x0BB] = 0x54;
+    mb_mapping->tab_registers[0x0BC] = 0x46;
+    mb_mapping->tab_registers[0x0BD] = 0x2d;
+    mb_mapping->tab_registers[0x0BE] = 0x38;
+    mb_mapping->tab_registers[0x0BF] = 0x20;
+    mb_mapping->tab_registers[0x0C0] = 0x73;
+    mb_mapping->tab_registers[0x0C1] = 0x74;
+    mb_mapping->tab_registers[0x0C2] = 0x72;
+    mb_mapping->tab_registers[0x0C3] = 0x69;
+    mb_mapping->tab_registers[0x0C4] = 0x6e;
+    mb_mapping->tab_registers[0x0C5] = 0x67;
+    mb_mapping->tab_registers[0x0C6] = 0x21;
 
     server_socket = modbus_tcp_listen(ctx, NB_CONNECTION);
     if (server_socket == -1) {
